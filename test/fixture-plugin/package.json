@@ -1,0 +1,11 @@
+{
+  "name": "dsh-compat-fixture",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Synthetic no-tool plugin used only for the DSH compatibility smoke self-test.",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}
