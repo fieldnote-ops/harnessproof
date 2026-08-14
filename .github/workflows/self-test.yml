@@ -1,0 +1,52 @@
+name: Self-test
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: self-test-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - run: npm test
+
+  consumer-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - dsh_version: 0.1.0-rc.6
+            experimental: false
+          - dsh_version: latest
+            experimental: false
+          - dsh_version: next
+            experimental: true
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - id: smoke
+        continue-on-error: ${{ matrix.experimental }}
+        uses: ./
+        with:
+          plugin_path: test/fixture-plugin
+          dsh_version: ${{ matrix.dsh_version }}
+          report_path: compat-output/dsh-${{ matrix.dsh_version }}.json
+      - if: ${{ !matrix.experimental && steps.smoke.outcome != 'success' }}
+        run: exit 1
