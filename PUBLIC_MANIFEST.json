@@ -1,0 +1,68 @@
+{
+  "files": {
+    "LICENSE": {
+      "bytes": 1067,
+      "sha256": "d6409fc30d7a7499f1e9843c41adb84bd89a16fe67fbf3d920c56c387e2c7208",
+      "target_path": "LICENSE"
+    },
+    "README.md": {
+      "bytes": 2017,
+      "sha256": "5be0d75577370c35726b0ee940026cf3d7d1bd2cf2c69fdb4c28772fbbf59da9",
+      "target_path": "README.md"
+    },
+    "README.zh-CN.md": {
+      "bytes": 1706,
+      "sha256": "23d8be9928018b0d41329d470ab9935293aebe203c758fea2f9af4f04e08cb8a",
+      "target_path": "README.zh-CN.md"
+    },
+    "SECURITY.md": {
+      "bytes": 784,
+      "sha256": "ab36e480e7b0db6ec87b5abcee5ee516154a77111df02a0832ee2ef5d81094e0",
+      "target_path": "SECURITY.md"
+    },
+    "action.yml": {
+      "bytes": 1271,
+      "sha256": "8759416afd7b29966f92658074de8b1b4574bff19e85d36965d0b81422d1fe75",
+      "target_path": "action.yml"
+    },
+    "github/workflows/self-test.yml": {
+      "bytes": 1378,
+      "sha256": "3851c474d24f14eb2c2409cf7a34b3e6192fee1db27f9cafb027c42c4fb79d8c",
+      "target_path": ".github/workflows/self-test.yml"
+    },
+    "index.js": {
+      "bytes": 11076,
+      "sha256": "e797b90ef54407a445e38578312f7cb1011d000d973426906f9936fd9c57d57a",
+      "target_path": "index.js"
+    },
+    "package.json": {
+      "bytes": 372,
+      "sha256": "28426ebcc8825b3619d98527ab39a08f0a77f2b6c504d7e42ad0084639087ac4",
+      "target_path": "package.json"
+    },
+    "test/config.test.js": {
+      "bytes": 1910,
+      "sha256": "6e2931eceb3008ef9dc8777768c9017b32c82a3a31da4659f665dfb83a54fb7e",
+      "target_path": "test/config.test.js"
+    },
+    "test/fixture-plugin/cordis.patch.yml": {
+      "bytes": 70,
+      "sha256": "cd5f618db04692ac45ed3a9cef3ec2d00170999a1926eacf35caf11026709b34",
+      "target_path": "test/fixture-plugin/cordis.patch.yml"
+    },
+    "test/fixture-plugin/index.js": {
+      "bytes": 134,
+      "sha256": "19617b052223df5bebcf58ae0db54f8648317c845f017725f11b862e7f1918f5",
+      "target_path": "test/fixture-plugin/index.js"
+    },
+    "test/fixture-plugin/package.json": {
+      "bytes": 248,
+      "sha256": "73f40fa241af29a7e3fa6d17c66ea10e2459936979f8e3d881191543386337ba",
+      "target_path": "test/fixture-plugin/package.json"
+    }
+  },
+  "product": "HarnessProof",
+  "public_identity": "FIELD NOTE",
+  "schema_version": 1,
+  "version": "0.1.0"
+}

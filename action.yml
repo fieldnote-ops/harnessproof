@@ -1,0 +1,41 @@
+name: HarnessProof
+description: Independently boot-smoke a DeepSeek Harness plugin in a clean profile and emit a JSON report.
+author: FIELD NOTE
+inputs:
+  plugin_path:
+    description: Repository-relative path to the plugin package.
+    required: false
+    default: .
+  dsh_version:
+    description: Exact @deepseek-ai/dsh version to consume.
+    required: false
+    default: 0.1.0-rc.6
+  profile:
+    description: Isolated DSH profile to compose and boot. Version 0.1 supports web.
+    required: false
+    default: web
+  boot_timeout_seconds:
+    description: Maximum seconds to wait for a healthy local Web response.
+    required: false
+    default: '30'
+  report_path:
+    description: Workspace-relative JSON report path.
+    required: false
+    default: harnessproof-report.json
+  registry_url:
+    description: npm registry used for the isolated DSH consumer install.
+    required: false
+    default: https://registry.npmjs.org
+outputs:
+  decision:
+    description: pass when install, composition, boot, and HTTP checks all succeed.
+  report_path:
+    description: Path to the generated JSON report.
+  dsh_version:
+    description: DSH version reported by the isolated consumer.
+runs:
+  using: node20
+  main: index.js
+branding:
+  icon: check-circle
+  color: purple
