@@ -18,6 +18,8 @@ The action emits `harnessproof-report.json` by default. A failed run also writes
 - no API keys, model calls, remote plugin calls, PR comments, badges, SARIF, or automatic publishing;
 - proves install, configuration composition, process boot, and local HTTP health—not tool correctness.
 
+Before linking the plugin, HarnessProof copies it into the disposable consumer and, by default, runs `npm ci --ignore-scripts` when dependencies are declared. This requires a committed `package-lock.json`, keeps generated `node_modules` out of the checkout, records the lock hash and dependency warnings, and prevents lifecycle scripts from running. Set `prepare_plugin_dependencies: none` only when an earlier workflow step deliberately prepared a self-contained plugin.
+
 For release workflows, pin this action by a full commit SHA. DeepSeek Harness is in Developer Preview, so a green result must always record the consumed DSH version.
 
 ## Local check
@@ -26,7 +28,7 @@ For release workflows, pin this action by a full commit SHA. DeepSeek Harness is
 npm test
 ```
 
-The runtime has no package dependencies and runs on the GitHub Actions Node 24 runtime. It installs DSH and pnpm only inside an isolated temporary consumer directory with lifecycle scripts disabled, then rebuilds only DSH's required `node-pty` native module. The temporary directory is deleted after the report is written. Registry URLs must use HTTPS and cannot embed credentials, query strings, or fragments.
+The runtime has no package dependencies and runs on the GitHub Actions Node 24 runtime. It installs locked plugin dependencies in an isolated copy with lifecycle scripts disabled, installs DSH and pnpm only inside the same temporary consumer directory with lifecycle scripts disabled, then rebuilds only DSH's required `node-pty` native module. The temporary directory is deleted after the report is written. Registry URLs must use HTTPS and cannot embed credentials, query strings, or fragments.
 
 ## Project status
 

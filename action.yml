@@ -26,6 +26,10 @@ inputs:
     description: npm registry used for the isolated DSH consumer install.
     required: false
     default: https://registry.npmjs.org
+  prepare_plugin_dependencies:
+    description: Install the plugin's locked dependencies with lifecycle scripts disabled, or leave them untouched.
+    required: false
+    default: locked
 outputs:
   decision:
     description: pass when install, composition, boot, and HTTP checks all succeed.

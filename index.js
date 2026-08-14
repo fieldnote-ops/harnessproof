@@ -1,6 +1,6 @@
 import { spawn, spawnSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
-import { appendFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { appendFileSync, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { get } from 'node:http'
 import { tmpdir } from 'node:os'
 import { basename, delimiter, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url'
 const ACTION_ROOT = dirname(fileURLToPath(import.meta.url))
 const PROFILE_PATTERN = /^[a-z0-9][a-z0-9_-]{0,31}$/
 const VERSION_PATTERN = /^(?:latest|next|\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)$/
+const PREPARE_PLUGIN_DEPENDENCIES = new Set(['locked', 'none'])
 
 function actionInput(name, fallback = '', env = process.env) {
   const normalized = name.toUpperCase()
@@ -82,6 +83,7 @@ function appendSummary(report) {
     `- Plugin: \`${report.plugin.name}@${report.plugin.version}\``,
     `- DSH: \`${report.consumer.dshVersion}\``,
     `- Profile: \`${report.consumer.profile}\``,
+    `- Plugin dependencies: \`${report.pluginPreparation.mode}\` (${report.pluginPreparation.installedPackageCount} installed, warnings: ${report.pluginPreparation.warningsObserved ? 'yes' : 'no'})`,
     `- Config layer: ${report.checks.configLayer ? 'present' : 'missing'}`,
     `- Web boot / HTTP: ${report.checks.booted ? 'pass' : 'fail'} / ${report.checks.httpStatus}`,
     `- Consumer install / total: ${report.timings.installMs} ms / ${report.timings.totalBeforeCleanupMs} ms`,
@@ -149,11 +151,13 @@ export function readConfiguration(env = process.env) {
   const dshVersion = actionInput('DSH_VERSION', '0.1.0-rc.6', env)
   const profile = actionInput('PROFILE', 'web', env)
   const registryUrl = actionInput('REGISTRY_URL', 'https://registry.npmjs.org', env)
+  const preparePluginDependencies = actionInput('PREPARE_PLUGIN_DEPENDENCIES', 'locked', env)
   const timeoutSeconds = Number(actionInput('BOOT_TIMEOUT_SECONDS', '30', env))
   if (!VERSION_PATTERN.test(dshVersion)) throw new Error('dsh_version must be latest, next, or an exact semver')
   if (!PROFILE_PATTERN.test(profile) || profile !== 'web') throw new Error('profile must be web in version 0.1')
+  if (!PREPARE_PLUGIN_DEPENDENCIES.has(preparePluginDependencies)) throw new Error('prepare_plugin_dependencies must be locked or none')
   if (!Number.isInteger(timeoutSeconds) || timeoutSeconds < 5 || timeoutSeconds > 120) throw new Error('boot_timeout_seconds must be an integer from 5 to 120')
-  return { workspace, pluginPath, reportPath, dshVersion, profile, registryUrl: validatedRegistryUrl(registryUrl), timeoutMs: timeoutSeconds * 1_000 }
+  return { workspace, pluginPath, reportPath, dshVersion, profile, registryUrl: validatedRegistryUrl(registryUrl), preparePluginDependencies, timeoutMs: timeoutSeconds * 1_000 }
 }
 
 export async function execute(config) {
@@ -175,6 +179,38 @@ export async function execute(config) {
   const runtime = mkdtempSync(join(tmpdir(), 'harnessproof-'))
   let child
   try {
+    const stagedPluginPath = join(runtime, 'plugin')
+    cpSync(config.pluginPath, stagedPluginPath, {
+      recursive: true,
+      filter: (source) => !['.git', 'node_modules'].includes(basename(source)),
+    })
+    const dependencySections = ['dependencies', 'devDependencies', 'optionalDependencies', 'peerDependencies']
+    const declaredDependencyNames = dependencySections.reduce((names, key) => {
+      const section = plugin[key]
+      if (section && typeof section === 'object') for (const name of Object.keys(section)) names.add(name)
+      return names
+    }, new Set())
+    const declaredDependencyCount = declaredDependencyNames.size
+    let pluginDependencyInstallMs = 0
+    let pluginInstalledPackageCount = 0
+    let pluginLockSha256 = null
+    let pluginDependencyWarningsObserved = false
+    if (config.preparePluginDependencies === 'locked' && declaredDependencyCount > 0) {
+      stage = 'plugin-dependency-prepare'
+      const pluginLockPath = join(stagedPluginPath, 'package-lock.json')
+      if (!existsSync(pluginLockPath)) {
+        throw new Error('locked plugin dependency preparation requires package-lock.json when dependencies are declared')
+      }
+      pluginLockSha256 = createHash('sha256').update(readFileSync(pluginLockPath)).digest('hex')
+      const preparation = run('npm', [
+        'ci', '--no-audit', '--no-fund', '--ignore-scripts',
+        `--registry=${config.registryUrl}`,
+      ], { cwd: stagedPluginPath, timeoutMs: 300_000 })
+      pluginDependencyInstallMs = preparation.elapsedMs
+      const preparationOutput = `${preparation.stdout}\n${preparation.stderr}`
+      pluginInstalledPackageCount = Number(preparationOutput.match(/added\s+(\d+)\s+packages?/)?.[1] || 0)
+      pluginDependencyWarningsObserved = /(?:^|\n)npm warn\b/i.test(preparationOutput)
+    }
     const inheritedPath = process.env.PATH || ''
     let dsh = process.env.DSH_EXECUTABLE
     let pnpm = process.env.PNPM_EXECUTABLE
@@ -213,16 +249,16 @@ export async function execute(config) {
     const versionProbe = run(dsh, ['--version'], { cwd: config.pluginPath, env })
     const observedVersion = versionProbe.stdout
     stage = 'plugin-add'
-    const pluginAdd = run(dsh, ['plugin', '--profile', config.profile, 'add', `link:${config.pluginPath}`], { cwd: config.pluginPath, env })
+    const pluginAdd = run(dsh, ['plugin', '--profile', config.profile, 'add', `link:${stagedPluginPath}`], { cwd: stagedPluginPath, env })
     stage = 'config-compose'
-    const dumpConfig = run(dsh, ['--profile', config.profile, '--dump-config'], { cwd: config.pluginPath, env })
+    const dumpConfig = run(dsh, ['--profile', config.profile, '--dump-config'], { cwd: stagedPluginPath, env })
     const composed = dumpConfig.stdout
     const configLayer = composed.includes(`# == ${plugin.name}`) && composed.includes(`name: ${plugin.name}`)
     if (!configLayer) throw new Error(`composed profile does not contain the ${plugin.name} bundle layer`)
 
     stage = 'web-boot'
     child = spawn(dsh, ['web', '--host', '127.0.0.1', '--port', '0'], {
-      cwd: config.pluginPath,
+      cwd: stagedPluginPath,
       env,
       stdio: ['ignore', 'pipe', 'pipe'],
       shell: false,
@@ -242,6 +278,16 @@ export async function execute(config) {
         metadataSha256: createHash('sha256').update(readFileSync(join(ACTION_ROOT, 'action.yml'))).digest('hex'),
       },
       plugin: { name: plugin.name, version: plugin.version, path: relative(config.workspace, config.pluginPath) || '.' },
+      pluginPreparation: {
+        mode: config.preparePluginDependencies,
+        stagedCopy: true,
+        declaredDependencyCount,
+        installMs: pluginDependencyInstallMs,
+        installedPackageCount: pluginInstalledPackageCount,
+        lockSha256: pluginLockSha256,
+        warningsObserved: pluginDependencyWarningsObserved,
+        lifecycleScripts: 'disabled',
+      },
       consumer: { package: '@deepseek-ai/dsh', requestedVersion: config.dshVersion, dshVersion: observedVersion, profile: config.profile },
       checks: { packageContract: true, officialPluginAdd: true, configLayer, booted: true, httpStatus: health.status },
       timings: {
@@ -256,7 +302,7 @@ export async function execute(config) {
         bootToHttpMs: bootMs,
         totalBeforeCleanupMs: Date.now() - executionStartedAt,
       },
-      security: { isolatedDshHome: true, credentialsRequired: false, externalServiceCalled: false, shellInterpolation: false, lifecycleScripts: 'node-pty-rebuild-only' },
+      security: { isolatedDshHome: true, isolatedPluginCopy: true, credentialsRequired: false, externalServiceCalled: false, shellInterpolation: false, lifecycleScripts: 'plugin-disabled; consumer-node-pty-rebuild-only' },
       evidenceLimit: 'Proves clean-profile install, composition, process boot, and local HTTP health only; it does not execute plugin tools or validate third-party credentials.',
     }
     stage = 'report-write'

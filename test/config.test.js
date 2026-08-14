@@ -32,6 +32,7 @@ test('accepts an exact local and HTTPS configuration', () => {
   }, () => readConfiguration())
   assert.equal(config.workspace, workspace)
   assert.equal(config.profile, 'web')
+  assert.equal(config.preparePluginDependencies, 'locked')
   assert.equal(config.timeoutMs, 15_000)
   assert.equal(config.reportPath, join(workspace, 'artifacts/result.json'))
 })
@@ -52,9 +53,38 @@ test('rejects unsupported profiles and insecure registries', () => {
   const registryWithQuery = new URL(exampleRegistry)
   registryWithQuery.searchParams.set('example', 'value')
   assert.throws(() => withInputs({ GITHUB_WORKSPACE: workspace, INPUT_PROFILE: 'headless' }, () => readConfiguration()), /profile must be web/)
+  assert.throws(() => withInputs({ GITHUB_WORKSPACE: workspace, INPUT_PREPARE_PLUGIN_DEPENDENCIES: 'install' }, () => readConfiguration()), /must be locked or none/)
   assert.throws(() => withInputs({ GITHUB_WORKSPACE: workspace, INPUT_REGISTRY_URL: 'ftp://registry.example' }, () => readConfiguration()), /must use HTTPS/)
   assert.throws(() => withInputs({ GITHUB_WORKSPACE: workspace, INPUT_REGISTRY_URL: registryWithUserinfo.href }, () => readConfiguration()), /must not contain credentials/)
   assert.throws(() => withInputs({ GITHUB_WORKSPACE: workspace, INPUT_REGISTRY_URL: registryWithQuery.href }, () => readConfiguration()), /must not contain a query or fragment/)
+})
+
+test('fails before consumer installation when locked plugin dependencies have no lockfile', () => {
+  const workspace = mkdtempSync(join(tmpdir(), 'dsh-action-unlocked-'))
+  const plugin = join(workspace, 'unlocked-plugin')
+  mkdirSync(plugin)
+  writeFileSync(join(plugin, 'package.json'), JSON.stringify({
+    name: 'unlocked-plugin',
+    version: '0.0.0',
+    dependencies: { example: '1.0.0' },
+    dsh: { bundle: { patch: './cordis.patch.yml' } },
+  }))
+  writeFileSync(join(plugin, 'cordis.patch.yml'), '- insert: []\n')
+  const reportPath = join(workspace, 'reports', 'failure.json')
+  const entrypoint = fileURLToPath(new URL('../index.js', import.meta.url))
+  const run = spawnSync(process.execPath, [entrypoint], {
+    env: {
+      ...process.env,
+      GITHUB_WORKSPACE: workspace,
+      INPUT_PLUGIN_PATH: 'unlocked-plugin',
+      INPUT_REPORT_PATH: 'reports/failure.json',
+    },
+    encoding: 'utf8',
+  })
+  assert.notEqual(run.status, 0)
+  const report = JSON.parse(readFileSync(reportPath, 'utf8'))
+  assert.equal(report.error.stage, 'plugin-dependency-prepare')
+  assert.match(report.error.message, /requires package-lock\.json/)
 })
 
 test('writes a bounded structured failure report after configuration succeeds', () => {

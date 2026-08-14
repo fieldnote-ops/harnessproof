@@ -6,13 +6,13 @@
       "target_path": "LICENSE"
     },
     "README.md": {
-      "bytes": 2444,
-      "sha256": "88da2f38b120778e94c7d23083239ec304a12628f24639159f8a92d7a52f39f8",
+      "bytes": 3003,
+      "sha256": "b15060bc8201c37e8c689d656492a3b0d31096b626fadd70d40bd49cf391a5e5",
       "target_path": "README.md"
     },
     "README.zh-CN.md": {
-      "bytes": 2144,
-      "sha256": "07011e3f84e2f3be19616836e632a7d8bdf6a15acc5aae98e919377338773e9f",
+      "bytes": 2708,
+      "sha256": "9481bd51b84423e8b727758a40af29859744b5d9edc0a435695d56b8c97c2dfc",
       "target_path": "README.zh-CN.md"
     },
     "SECURITY.md": {
@@ -21,8 +21,8 @@
       "target_path": "SECURITY.md"
     },
     "action.yml": {
-      "bytes": 1271,
-      "sha256": "66782bbb5930dc8bc1baafb01a35bb1b89de29bdaaa1ff2c11ea62476e506058",
+      "bytes": 1458,
+      "sha256": "e9b8555e81ef13071de264116c47a7a6f96320135120d183cf3c89fa1c0b8c99",
       "target_path": "action.yml"
     },
     "github/workflows/self-test.yml": {
@@ -31,18 +31,18 @@
       "target_path": ".github/workflows/self-test.yml"
     },
     "index.js": {
-      "bytes": 14109,
-      "sha256": "5a335ff187de5caaff348e68f58bccde23c8232680e36dd7bf21463248ed4bce",
+      "bytes": 16896,
+      "sha256": "f3926673df14dc9dc2d0e796cbaaf664d47cb978dd95054cb2424c91f7c74b4c",
       "target_path": "index.js"
     },
     "package.json": {
       "bytes": 372,
-      "sha256": "c216d37c3d156e33befe32c65276740b37514866367cfaf47148a58f2574c725",
+      "sha256": "0c42323c3568ce49e3bb25ac5e75f5c69b9c4f4c1f6d7a108422479aa72e8744",
       "target_path": "package.json"
     },
     "test/config.test.js": {
-      "bytes": 3733,
-      "sha256": "f2447024f75884932490064da72b94d43ae550c0acee1775f43401900e92093d",
+      "bytes": 5108,
+      "sha256": "d37e8669e200172411d470d503766b3cce62ed85256a7b5935607da1d3bb700d",
       "target_path": "test/config.test.js"
     },
     "test/fixture-plugin/cordis.patch.yml": {
@@ -51,18 +51,23 @@
       "target_path": "test/fixture-plugin/cordis.patch.yml"
     },
     "test/fixture-plugin/index.js": {
-      "bytes": 134,
-      "sha256": "19617b052223df5bebcf58ae0db54f8648317c845f017725f11b862e7f1918f5",
+      "bytes": 169,
+      "sha256": "47f70517acfc1ba004cec9bdbd94890cb51a0ee8dc5e5321956a575e0bde3ebd",
       "target_path": "test/fixture-plugin/index.js"
     },
+    "test/fixture-plugin/package-lock.json": {
+      "bytes": 1329,
+      "sha256": "80ca5dafacaf7943ce5e2ef3a6832ff0f4be5a89a6a09b817b92d99043363f33",
+      "target_path": "test/fixture-plugin/package-lock.json"
+    },
     "test/fixture-plugin/package.json": {
-      "bytes": 248,
-      "sha256": "73f40fa241af29a7e3fa6d17c66ea10e2459936979f8e3d881191543386337ba",
+      "bytes": 314,
+      "sha256": "f8f81b3626692069305fe689ef424eec7a3be9dc76f0a1fbdb419fb3e1bf436d",
       "target_path": "test/fixture-plugin/package.json"
     }
   },
   "product": "HarnessProof",
   "public_identity": "FIELD NOTE",
   "schema_version": 1,
-  "version": "0.1.3"
+  "version": "0.1.4"
 }

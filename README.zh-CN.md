@@ -18,9 +18,11 @@
 - 不读取 API key、不调用模型或插件远程服务、不自动评论 PR、不生成徽章或 SARIF、不发布；
 - 只证明安装、配置组合、进程启动和本地 HTTP 健康，不证明插件工具本身正确。
 
+在链接插件之前，HarnessProof 会把插件复制到一次性 consumer；只要声明了依赖，默认就在副本中运行 `npm ci --ignore-scripts`。因此插件必须提交 `package-lock.json`，生成的 `node_modules` 不会污染 checkout，报告会记录 lock 哈希和依赖警告，生命周期脚本不会运行。只有当更早的工作流步骤已经明确准备好一个自包含插件时，才应设置 `prepare_plugin_dependencies: none`。
+
 正式工作流应使用完整 commit SHA 固定本 Action。DeepSeek Harness 仍是 Developer Preview，因此任何绿色结果都必须同时记录实际消费的 DSH 版本。
 
-运行时代码零依赖，使用 GitHub Actions Node 24 运行时；DSH 与 pnpm 只安装在隔离临时目录，默认关闭依赖生命周期脚本，随后只重建 DSH 必需的 `node-pty` 原生模块。报告写出后删除临时目录。Registry URL 必须使用 HTTPS，且不得嵌入凭据、查询参数或片段。
+运行时代码零依赖，使用 GitHub Actions Node 24 运行时；它先在隔离副本中安装锁定的插件依赖并禁用生命周期脚本，再只在同一个临时 consumer 目录中安装 DSH 与 pnpm，并同样关闭生命周期脚本，随后只重建 DSH 必需的 `node-pty` 原生模块。报告写出后删除临时目录。Registry URL 必须使用 HTTPS，且不得嵌入凭据、查询参数或片段。
 
 ## 当前状态
 
