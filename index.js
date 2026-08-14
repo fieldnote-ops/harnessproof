@@ -152,6 +152,7 @@ export async function execute(config) {
     let dsh = process.env.DSH_EXECUTABLE
     let pnpm = process.env.PNPM_EXECUTABLE
     let installMs = 0
+    let nativeModuleRebuildMs = 0
     let installedPackageCount = 0
     let consumerLockSha256 = null
     const isolatedConsumerInstall = !dsh
@@ -161,6 +162,11 @@ export async function execute(config) {
         `--registry=${config.registryUrl}`, `@deepseek-ai/dsh@${config.dshVersion}`, 'pnpm@11.0.8',
       ], { cwd: runtime, timeoutMs: 300_000 })
       installMs = install.elapsedMs
+      const nativeModuleRebuild = run('npm', [
+        'rebuild', '--prefix', runtime, '--no-audit', '--no-fund',
+        `--registry=${config.registryUrl}`, 'node-pty',
+      ], { cwd: runtime, timeoutMs: 180_000 })
+      nativeModuleRebuildMs = nativeModuleRebuild.elapsedMs
       installedPackageCount = Number(install.stdout.match(/added\s+(\d+)\s+packages?/)?.[1] || 0)
       consumerLockSha256 = createHash('sha256').update(readFileSync(join(runtime, 'package-lock.json'))).digest('hex')
       dsh = join(runtime, 'node_modules', '.bin', 'dsh')
@@ -201,6 +207,7 @@ export async function execute(config) {
       timings: {
         isolatedConsumerInstall,
         installMs,
+        nativeModuleRebuildMs,
         installedPackageCount,
         consumerLockSha256,
         versionProbeMs: versionProbe.elapsedMs,
@@ -209,7 +216,7 @@ export async function execute(config) {
         bootToHttpMs: bootMs,
         totalBeforeCleanupMs: Date.now() - executionStartedAt,
       },
-      security: { isolatedDshHome: true, credentialsRequired: false, externalServiceCalled: false, shellInterpolation: false },
+      security: { isolatedDshHome: true, credentialsRequired: false, externalServiceCalled: false, shellInterpolation: false, lifecycleScripts: 'node-pty-rebuild-only' },
       evidenceLimit: 'Proves clean-profile install, composition, process boot, and local HTTP health only; it does not execute plugin tools or validate third-party credentials.',
     }
     mkdirSync(dirname(config.reportPath), { recursive: true })

@@ -20,7 +20,7 @@ v0.1 有意保持窄边界：
 
 正式工作流应使用完整 commit SHA 固定本 Action。DeepSeek Harness 仍是 Developer Preview，因此任何绿色结果都必须同时记录实际消费的 DSH 版本。
 
-运行时代码零依赖；DSH 与 pnpm 只安装在隔离临时目录，报告写出后删除。
+运行时代码零依赖；DSH 与 pnpm 只安装在隔离临时目录，默认关闭依赖生命周期脚本，随后只重建 DSH 必需的 `node-pty` 原生模块。报告写出后删除临时目录。
 
 ## 当前状态
 

@@ -6,18 +6,18 @@
       "target_path": "LICENSE"
     },
     "README.md": {
-      "bytes": 2017,
-      "sha256": "5be0d75577370c35726b0ee940026cf3d7d1bd2cf2c69fdb4c28772fbbf59da9",
+      "bytes": 2118,
+      "sha256": "084918e2d61b7134db391dd8596472dd985e2e056a769e2e0d67ee33f0498097",
       "target_path": "README.md"
     },
     "README.zh-CN.md": {
-      "bytes": 1706,
-      "sha256": "23d8be9928018b0d41329d470ab9935293aebe203c758fea2f9af4f04e08cb8a",
+      "bytes": 1813,
+      "sha256": "ad7d4e8bf662d33508ce6d03b47990e95fdae08d9f6ee86b267be78bbdf9b9f5",
       "target_path": "README.zh-CN.md"
     },
     "SECURITY.md": {
-      "bytes": 784,
-      "sha256": "ab36e480e7b0db6ec87b5abcee5ee516154a77111df02a0832ee2ef5d81094e0",
+      "bytes": 913,
+      "sha256": "61d7a247173892c0713947c19d36db5766d410b9ea57dbd52abd1bcf588146ad",
       "target_path": "SECURITY.md"
     },
     "action.yml": {
@@ -31,13 +31,13 @@
       "target_path": ".github/workflows/self-test.yml"
     },
     "index.js": {
-      "bytes": 11076,
-      "sha256": "e797b90ef54407a445e38578312f7cb1011d000d973426906f9936fd9c57d57a",
+      "bytes": 11461,
+      "sha256": "750fc2a0e11a22a7c4d572531f9e1b072b412375e032efb2674811cfd9b4051f",
       "target_path": "index.js"
     },
     "package.json": {
       "bytes": 372,
-      "sha256": "28426ebcc8825b3619d98527ab39a08f0a77f2b6c504d7e42ad0084639087ac4",
+      "sha256": "94142ab031762c6d7e7aeccfcbd1428cb1c69d3ede62916dd1aab4403e13796a",
       "target_path": "package.json"
     },
     "test/config.test.js": {
@@ -64,5 +64,5 @@
   "product": "HarnessProof",
   "public_identity": "FIELD NOTE",
   "schema_version": 1,
-  "version": "0.1.0"
+  "version": "0.1.1"
 }

@@ -26,7 +26,7 @@ For release workflows, pin this action by a full commit SHA. DeepSeek Harness is
 npm test
 ```
 
-The runtime has no package dependencies. It installs DSH and pnpm only inside an isolated temporary consumer directory and deletes that directory after the report is written.
+The runtime has no package dependencies. It installs DSH and pnpm only inside an isolated temporary consumer directory with lifecycle scripts disabled, then rebuilds only DSH's required `node-pty` native module. The temporary directory is deleted after the report is written.
 
 ## Project status
 
