@@ -27,7 +27,7 @@
     },
     "github/workflows/self-test.yml": {
       "bytes": 1378,
-      "sha256": "3851c474d24f14eb2c2409cf7a34b3e6192fee1db27f9cafb027c42c4fb79d8c",
+      "sha256": "9fe1bff3fe688dcd2b2ac09f6841da682a03d16bc336c78085e3968f7b3fa1ff",
       "target_path": ".github/workflows/self-test.yml"
     },
     "index.js": {
@@ -37,7 +37,7 @@
     },
     "package.json": {
       "bytes": 372,
-      "sha256": "0430405e5ed3a9e7360f7125a925aa26bf39f22163778841e7081d8c7f67efcb",
+      "sha256": "c216d37c3d156e33befe32c65276740b37514866367cfaf47148a58f2574c725",
       "target_path": "package.json"
     },
     "test/config.test.js": {
@@ -64,5 +64,5 @@
   "product": "HarnessProof",
   "public_identity": "FIELD NOTE",
   "schema_version": 1,
-  "version": "0.1.2"
+  "version": "0.1.3"
 }
