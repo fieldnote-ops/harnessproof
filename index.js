@@ -11,6 +11,18 @@ const PROFILE_PATTERN = /^[a-z0-9][a-z0-9_-]{0,31}$/
 const VERSION_PATTERN = /^(?:latest|next|\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)$/
 const PREPARE_PLUGIN_DEPENDENCIES = new Set(['locked', 'none'])
 
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+/** Recognize exact ordinary or YAML-quoted npm package names in one exact bundle layer. */
+export function configLayerPresent(composed, packageName) {
+  if (typeof composed !== 'string' || typeof packageName !== 'string' || packageName.length === 0) return false
+  if (!composed.split('\n').some((line) => line.trim() === `# == ${packageName}`)) return false
+  const exact = escapeRegExp(packageName)
+  return new RegExp(`^\\s*name:\\s*(?:${exact}|'${exact}'|"${exact}")\\s*$`, 'm').test(composed)
+}
+
 function actionInput(name, fallback = '', env = process.env) {
   const normalized = name.toUpperCase()
   const value = env[`INPUT_${normalized}`] ?? env[`INPUT_${normalized.replaceAll('-', '_')}`]
@@ -253,7 +265,7 @@ export async function execute(config) {
     stage = 'config-compose'
     const dumpConfig = run(dsh, ['--profile', config.profile, '--dump-config'], { cwd: stagedPluginPath, env })
     const composed = dumpConfig.stdout
-    const configLayer = composed.includes(`# == ${plugin.name}`) && composed.includes(`name: ${plugin.name}`)
+    const configLayer = configLayerPresent(composed, plugin.name)
     if (!configLayer) throw new Error(`composed profile does not contain the ${plugin.name} bundle layer`)
 
     stage = 'web-boot'

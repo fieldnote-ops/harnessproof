@@ -20,6 +20,8 @@ The action emits `harnessproof-report.json` by default. A failed run also writes
 
 Before linking the plugin, HarnessProof copies it into the disposable consumer and, by default, runs `npm ci --ignore-scripts` when dependencies are declared. This requires a committed `package-lock.json`, keeps generated `node_modules` out of the checkout, records the lock hash and dependency warnings, and prevents lifecycle scripts from running. Set `prepare_plugin_dependencies: none` only when an earlier workflow step deliberately prepared a self-contained plugin.
 
+Bundle-layer detection accepts both ordinary npm package names and the quoted YAML scalar emitted for scoped names such as `@scope/plugin`; it still requires the exact `# == package` layer label and exact `name:` value.
+
 For release workflows, pin this action by a full commit SHA. DeepSeek Harness is in Developer Preview, so a green result must always record the consumed DSH version.
 
 ## Local check

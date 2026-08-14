@@ -6,7 +6,7 @@ import { join } from 'node:path'
 import test from 'node:test'
 import { fileURLToPath } from 'node:url'
 
-import { readConfiguration } from '../index.js'
+import { configLayerPresent, readConfiguration } from '../index.js'
 
 function withInputs(values, callback) {
   const prior = { ...process.env }
@@ -35,6 +35,19 @@ test('accepts an exact local and HTTPS configuration', () => {
   assert.equal(config.preparePluginDependencies, 'locked')
   assert.equal(config.timeoutMs, 15_000)
   assert.equal(config.reportPath, join(workspace, 'artifacts/result.json'))
+})
+
+test('recognizes exact quoted scoped package layers without substring matches', () => {
+  const scoped = [
+    '# == @fieldnote/dingtalk-stream-core',
+    '- id: bridge',
+    "  name: '@fieldnote/dingtalk-stream-core'",
+    '',
+  ].join('\n')
+  assert.equal(configLayerPresent(scoped, '@fieldnote/dingtalk-stream-core'), true)
+  assert.equal(configLayerPresent(scoped, '@fieldnote/dingtalk-stream'), false)
+  assert.equal(configLayerPresent(scoped.replace("'@fieldnote/dingtalk-stream-core'", "'@attacker/other'"), '@fieldnote/dingtalk-stream-core'), false)
+  assert.equal(configLayerPresent('# == plain-plugin\n- id: x\n  name: plain-plugin\n', 'plain-plugin'), true)
 })
 
 test('rejects report traversal', () => {
