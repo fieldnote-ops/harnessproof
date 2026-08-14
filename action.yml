@@ -34,7 +34,7 @@ outputs:
   dsh_version:
     description: DSH version reported by the isolated consumer.
 runs:
-  using: node20
+  using: node24
   main: index.js
 branding:
   icon: check-circle

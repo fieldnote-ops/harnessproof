@@ -11,7 +11,7 @@
 
 这里的 `main` 只用于最初的开发者预览；长期工作流应替换为经过审阅的完整 commit SHA。
 
-v0.1 有意保持窄边界：
+默认报告路径为 `harnessproof-report.json`。当报告路径本身有效时，失败任务也会写出一份有长度上限的 JSON 失败报告，保留首个失败阶段，同时不需要写权限。v0.1 有意保持窄边界：
 
 - 只支持 Linux/macOS 风格 runner 与 `web` profile；
 - 每个 job 只核一个精确 DSH 版本，`latest` / `next` 应放进 workflow matrix；
@@ -20,7 +20,7 @@ v0.1 有意保持窄边界：
 
 正式工作流应使用完整 commit SHA 固定本 Action。DeepSeek Harness 仍是 Developer Preview，因此任何绿色结果都必须同时记录实际消费的 DSH 版本。
 
-运行时代码零依赖；DSH 与 pnpm 只安装在隔离临时目录，默认关闭依赖生命周期脚本，随后只重建 DSH 必需的 `node-pty` 原生模块。报告写出后删除临时目录。
+运行时代码零依赖，使用 GitHub Actions Node 24 运行时；DSH 与 pnpm 只安装在隔离临时目录，默认关闭依赖生命周期脚本，随后只重建 DSH 必需的 `node-pty` 原生模块。报告写出后删除临时目录。Registry URL 必须使用 HTTPS，且不得嵌入凭据、查询参数或片段。
 
 ## 当前状态
 

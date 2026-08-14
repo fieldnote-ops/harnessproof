@@ -1,6 +1,6 @@
 {
   "name": "harnessproof",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "description": "Independent clean-profile boot evidence for DeepSeek Harness plugins.",
   "type": "module",
@@ -10,7 +10,7 @@
     "check": "npm test && node --check index.js"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=24"
   },
   "license": "MIT"
 }

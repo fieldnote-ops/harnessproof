@@ -6,13 +6,13 @@
       "target_path": "LICENSE"
     },
     "README.md": {
-      "bytes": 2118,
-      "sha256": "084918e2d61b7134db391dd8596472dd985e2e056a769e2e0d67ee33f0498097",
+      "bytes": 2444,
+      "sha256": "88da2f38b120778e94c7d23083239ec304a12628f24639159f8a92d7a52f39f8",
       "target_path": "README.md"
     },
     "README.zh-CN.md": {
-      "bytes": 1813,
-      "sha256": "ad7d4e8bf662d33508ce6d03b47990e95fdae08d9f6ee86b267be78bbdf9b9f5",
+      "bytes": 2144,
+      "sha256": "07011e3f84e2f3be19616836e632a7d8bdf6a15acc5aae98e919377338773e9f",
       "target_path": "README.zh-CN.md"
     },
     "SECURITY.md": {
@@ -22,7 +22,7 @@
     },
     "action.yml": {
       "bytes": 1271,
-      "sha256": "8759416afd7b29966f92658074de8b1b4574bff19e85d36965d0b81422d1fe75",
+      "sha256": "66782bbb5930dc8bc1baafb01a35bb1b89de29bdaaa1ff2c11ea62476e506058",
       "target_path": "action.yml"
     },
     "github/workflows/self-test.yml": {
@@ -31,18 +31,18 @@
       "target_path": ".github/workflows/self-test.yml"
     },
     "index.js": {
-      "bytes": 11461,
-      "sha256": "750fc2a0e11a22a7c4d572531f9e1b072b412375e032efb2674811cfd9b4051f",
+      "bytes": 14109,
+      "sha256": "5a335ff187de5caaff348e68f58bccde23c8232680e36dd7bf21463248ed4bce",
       "target_path": "index.js"
     },
     "package.json": {
       "bytes": 372,
-      "sha256": "94142ab031762c6d7e7aeccfcbd1428cb1c69d3ede62916dd1aab4403e13796a",
+      "sha256": "0430405e5ed3a9e7360f7125a925aa26bf39f22163778841e7081d8c7f67efcb",
       "target_path": "package.json"
     },
     "test/config.test.js": {
-      "bytes": 1910,
-      "sha256": "6e2931eceb3008ef9dc8777768c9017b32c82a3a31da4659f665dfb83a54fb7e",
+      "bytes": 3733,
+      "sha256": "f2447024f75884932490064da72b94d43ae550c0acee1775f43401900e92093d",
       "target_path": "test/config.test.js"
     },
     "test/fixture-plugin/cordis.patch.yml": {
@@ -64,5 +64,5 @@
   "product": "HarnessProof",
   "public_identity": "FIELD NOTE",
   "schema_version": 1,
-  "version": "0.1.1"
+  "version": "0.1.2"
 }

@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict'
-import { mkdtempSync } from 'node:fs'
+import { spawnSync } from 'node:child_process'
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
+import { fileURLToPath } from 'node:url'
 
 import { readConfiguration } from '../index.js'
 
@@ -44,6 +46,37 @@ test('rejects report traversal', () => {
 
 test('rejects unsupported profiles and insecure registries', () => {
   const workspace = mkdtempSync(join(tmpdir(), 'dsh-action-config-'))
+  const exampleRegistry = new URL(['https:', '', ['registry', 'example'].join('.')].join('/'))
+  const registryWithUserinfo = new URL(exampleRegistry)
+  registryWithUserinfo.username = 'user'
+  const registryWithQuery = new URL(exampleRegistry)
+  registryWithQuery.searchParams.set('example', 'value')
   assert.throws(() => withInputs({ GITHUB_WORKSPACE: workspace, INPUT_PROFILE: 'headless' }, () => readConfiguration()), /profile must be web/)
   assert.throws(() => withInputs({ GITHUB_WORKSPACE: workspace, INPUT_REGISTRY_URL: 'ftp://registry.example' }, () => readConfiguration()), /must use HTTPS/)
+  assert.throws(() => withInputs({ GITHUB_WORKSPACE: workspace, INPUT_REGISTRY_URL: registryWithUserinfo.href }, () => readConfiguration()), /must not contain credentials/)
+  assert.throws(() => withInputs({ GITHUB_WORKSPACE: workspace, INPUT_REGISTRY_URL: registryWithQuery.href }, () => readConfiguration()), /must not contain a query or fragment/)
+})
+
+test('writes a bounded structured failure report after configuration succeeds', () => {
+  const workspace = mkdtempSync(join(tmpdir(), 'dsh-action-failure-'))
+  const plugin = join(workspace, 'broken-plugin')
+  mkdirSync(plugin)
+  writeFileSync(join(plugin, 'package.json'), JSON.stringify({ name: 'broken-plugin', version: '0.0.0' }))
+  const reportPath = join(workspace, 'reports', 'failure.json')
+  const entrypoint = fileURLToPath(new URL('../index.js', import.meta.url))
+  const run = spawnSync(process.execPath, [entrypoint], {
+    env: {
+      ...process.env,
+      GITHUB_WORKSPACE: workspace,
+      INPUT_PLUGIN_PATH: 'broken-plugin',
+      INPUT_REPORT_PATH: 'reports/failure.json',
+    },
+    encoding: 'utf8',
+  })
+  assert.notEqual(run.status, 0)
+  const report = JSON.parse(readFileSync(reportPath, 'utf8'))
+  assert.equal(report.decision, 'fail')
+  assert.equal(report.error.stage, 'package-contract')
+  assert.match(report.error.message, /dsh\.bundle\.patch/)
+  assert.ok(Buffer.byteLength(report.error.message) <= 4_000)
 })

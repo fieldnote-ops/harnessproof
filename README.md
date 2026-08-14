@@ -11,7 +11,7 @@ An independent, evidence-producing GitHub Action for plugins built for DeepSeek 
 
 `main` is shown only for the initial developer preview. For a durable workflow, replace it with a reviewed full commit SHA.
 
-The action emits `dsh-compat-report.json`. Version 0.1 is deliberately narrow:
+The action emits `harnessproof-report.json` by default. A failed run also writes a bounded JSON failure report when the requested report path is valid, so the first failed stage remains inspectable without granting write permissions. Version 0.1 is deliberately narrow:
 
 - Linux/macOS-style runners and the `web` profile only;
 - one exact DSH version per job, so `latest`/`next` belong in a workflow matrix;
@@ -26,7 +26,7 @@ For release workflows, pin this action by a full commit SHA. DeepSeek Harness is
 npm test
 ```
 
-The runtime has no package dependencies. It installs DSH and pnpm only inside an isolated temporary consumer directory with lifecycle scripts disabled, then rebuilds only DSH's required `node-pty` native module. The temporary directory is deleted after the report is written.
+The runtime has no package dependencies and runs on the GitHub Actions Node 24 runtime. It installs DSH and pnpm only inside an isolated temporary consumer directory with lifecycle scripts disabled, then rebuilds only DSH's required `node-pty` native module. The temporary directory is deleted after the report is written. Registry URLs must use HTTPS and cannot embed credentials, query strings, or fragments.
 
 ## Project status
 

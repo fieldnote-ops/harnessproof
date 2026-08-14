@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto'
 import { appendFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { get } from 'node:http'
 import { tmpdir } from 'node:os'
-import { basename, delimiter, dirname, isAbsolute, join, relative, resolve } from 'node:path'
+import { basename, delimiter, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const ACTION_ROOT = dirname(fileURLToPath(import.meta.url))
@@ -18,9 +18,18 @@ function actionInput(name, fallback = '', env = process.env) {
 
 function safeWorkspacePath(value, workspace, label) {
   const path = resolve(workspace, value)
-  const outside = relative(workspace, path).startsWith('..') || relative(workspace, path) === '..'
+  const relativePath = relative(workspace, path)
+  const outside = relativePath === '..' || relativePath.startsWith(`..${sep}`) || isAbsolute(relativePath)
   if (outside) throw new Error(`${label} must stay inside the workspace`)
   return path
+}
+
+function validatedRegistryUrl(value) {
+  const registry = new URL(value)
+  if (registry.protocol !== 'https:') throw new Error('registry_url must use HTTPS')
+  if (registry.username || registry.password) throw new Error('registry_url must not contain credentials')
+  if (registry.search || registry.hash) throw new Error('registry_url must not contain a query or fragment')
+  return registry.href.replace(/\/$/, '')
 }
 
 function run(command, args, options = {}) {
@@ -54,6 +63,18 @@ function appendOutput(name, value) {
 function appendSummary(report) {
   const destination = process.env.GITHUB_STEP_SUMMARY
   if (!destination) return
+  if (report.decision === 'fail') {
+    appendFileSync(destination, [
+      '## HarnessProof',
+      '',
+      '- Decision: **fail**',
+      `- Stage: \`${report.error.stage}\``,
+      `- Error: ${report.error.message.replaceAll('\n', ' ')}`,
+      `- Report: \`${report.reportPath}\``,
+      '',
+    ].join('\n'), 'utf8')
+    return
+  }
   appendFileSync(destination, [
     '## HarnessProof',
     '',
@@ -132,18 +153,24 @@ export function readConfiguration(env = process.env) {
   if (!VERSION_PATTERN.test(dshVersion)) throw new Error('dsh_version must be latest, next, or an exact semver')
   if (!PROFILE_PATTERN.test(profile) || profile !== 'web') throw new Error('profile must be web in version 0.1')
   if (!Number.isInteger(timeoutSeconds) || timeoutSeconds < 5 || timeoutSeconds > 120) throw new Error('boot_timeout_seconds must be an integer from 5 to 120')
-  const registry = new URL(registryUrl)
-  if (registry.protocol !== 'https:') throw new Error('registry_url must use HTTPS')
-  return { workspace, pluginPath, reportPath, dshVersion, profile, registryUrl: registry.href.replace(/\/$/, ''), timeoutMs: timeoutSeconds * 1_000 }
+  return { workspace, pluginPath, reportPath, dshVersion, profile, registryUrl: validatedRegistryUrl(registryUrl), timeoutMs: timeoutSeconds * 1_000 }
 }
 
 export async function execute(config) {
   const executionStartedAt = Date.now()
-  const pluginManifestPath = join(config.pluginPath, 'package.json')
-  const plugin = JSON.parse(readFileSync(pluginManifestPath, 'utf8'))
-  const patch = plugin.dsh?.bundle?.patch
-  if (!plugin.name || !plugin.version || typeof patch !== 'string') throw new Error('plugin package.json must declare name, version, and dsh.bundle.patch')
-  if (!readFileSync(join(config.pluginPath, patch), 'utf8').trim()) throw new Error('declared DSH bundle patch is empty')
+  let stage = 'package-contract'
+  let plugin
+  try {
+    const pluginManifestPath = join(config.pluginPath, 'package.json')
+    plugin = JSON.parse(readFileSync(pluginManifestPath, 'utf8'))
+    const patch = plugin.dsh?.bundle?.patch
+    if (!plugin.name || !plugin.version || typeof patch !== 'string') throw new Error('plugin package.json must declare name, version, and dsh.bundle.patch')
+    const patchPath = safeWorkspacePath(patch, config.pluginPath, 'dsh.bundle.patch')
+    if (!readFileSync(patchPath, 'utf8').trim()) throw new Error('declared DSH bundle patch is empty')
+  } catch (error) {
+    if (error instanceof Error && !error.harnessproofStage) error.harnessproofStage = stage
+    throw error
+  }
 
   const runtime = mkdtempSync(join(tmpdir(), 'harnessproof-'))
   let child
@@ -157,6 +184,7 @@ export async function execute(config) {
     let consumerLockSha256 = null
     const isolatedConsumerInstall = !dsh
     if (!dsh) {
+      stage = 'consumer-install'
       const install = run('npm', [
         'install', '--prefix', runtime, '--no-audit', '--no-fund', '--ignore-scripts',
         `--registry=${config.registryUrl}`, `@deepseek-ai/dsh@${config.dshVersion}`, 'pnpm@11.0.8',
@@ -181,14 +209,18 @@ export async function execute(config) {
     if (pnpm && !executableExists(pnpm, env)) throw new Error('pnpm executable is not runnable')
     if (!pnpm && !executableExists('pnpm', env)) throw new Error('pnpm is required for official DSH plugin installation')
 
+    stage = 'version-probe'
     const versionProbe = run(dsh, ['--version'], { cwd: config.pluginPath, env })
     const observedVersion = versionProbe.stdout
+    stage = 'plugin-add'
     const pluginAdd = run(dsh, ['plugin', '--profile', config.profile, 'add', `link:${config.pluginPath}`], { cwd: config.pluginPath, env })
+    stage = 'config-compose'
     const dumpConfig = run(dsh, ['--profile', config.profile, '--dump-config'], { cwd: config.pluginPath, env })
     const composed = dumpConfig.stdout
     const configLayer = composed.includes(`# == ${plugin.name}`) && composed.includes(`name: ${plugin.name}`)
     if (!configLayer) throw new Error(`composed profile does not contain the ${plugin.name} bundle layer`)
 
+    stage = 'web-boot'
     child = spawn(dsh, ['web', '--host', '127.0.0.1', '--port', '0'], {
       cwd: config.pluginPath,
       env,
@@ -198,9 +230,17 @@ export async function execute(config) {
     const bootStartedAt = Date.now()
     const health = await waitForHealthyWeb(child, config.timeoutMs)
     const bootMs = Date.now() - bootStartedAt
+    const actionManifest = JSON.parse(readFileSync(join(ACTION_ROOT, 'package.json'), 'utf8'))
     const report = {
       schemaVersion: 1,
       decision: 'pass',
+      action: {
+        name: actionManifest.name,
+        version: actionManifest.version,
+        runtime: 'node24',
+        entrypointSha256: createHash('sha256').update(readFileSync(join(ACTION_ROOT, 'index.js'))).digest('hex'),
+        metadataSha256: createHash('sha256').update(readFileSync(join(ACTION_ROOT, 'action.yml'))).digest('hex'),
+      },
       plugin: { name: plugin.name, version: plugin.version, path: relative(config.workspace, config.pluginPath) || '.' },
       consumer: { package: '@deepseek-ai/dsh', requestedVersion: config.dshVersion, dshVersion: observedVersion, profile: config.profile },
       checks: { packageContract: true, officialPluginAdd: true, configLayer, booted: true, httpStatus: health.status },
@@ -219,9 +259,13 @@ export async function execute(config) {
       security: { isolatedDshHome: true, credentialsRequired: false, externalServiceCalled: false, shellInterpolation: false, lifecycleScripts: 'node-pty-rebuild-only' },
       evidenceLimit: 'Proves clean-profile install, composition, process boot, and local HTTP health only; it does not execute plugin tools or validate third-party credentials.',
     }
+    stage = 'report-write'
     mkdirSync(dirname(config.reportPath), { recursive: true })
     writeFileSync(config.reportPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8')
     return report
+  } catch (error) {
+    if (error instanceof Error && !error.harnessproofStage) error.harnessproofStage = stage
+    throw error
   } finally {
     if (child) await stopChild(child)
     rmSync(runtime, { recursive: true, force: true })
@@ -229,8 +273,9 @@ export async function execute(config) {
 }
 
 async function main() {
+  let config
   try {
-    const config = readConfiguration()
+    config = readConfiguration()
     const report = await execute(config)
     appendOutput('decision', report.decision)
     appendOutput('report_path', relative(config.workspace, config.reportPath))
@@ -238,7 +283,24 @@ async function main() {
     appendSummary(report)
     process.stdout.write(`HarnessProof passed: ${report.plugin.name}@${report.plugin.version} on ${report.consumer.dshVersion}.\n`)
   } catch (error) {
-    process.stderr.write(`HarnessProof failed: ${error instanceof Error ? error.message : String(error)}\n`)
+    const message = (error instanceof Error ? error.message : String(error)).slice(-4_000)
+    const stage = error instanceof Error && typeof error.harnessproofStage === 'string' ? error.harnessproofStage : 'configuration'
+    if (config) {
+      const report = {
+        schemaVersion: 1,
+        decision: 'fail',
+        reportPath: relative(config.workspace, config.reportPath),
+        error: { stage, message },
+        security: { credentialsRequired: false, shellInterpolation: false, errorMessageLimitBytes: 4_000 },
+        evidenceLimit: 'Records the first failed HarnessProof stage and a bounded error only; it does not prove plugin incompatibility without reproducing the failure.',
+      }
+      mkdirSync(dirname(config.reportPath), { recursive: true })
+      writeFileSync(config.reportPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8')
+      appendOutput('decision', 'fail')
+      appendOutput('report_path', report.reportPath)
+      appendSummary(report)
+    }
+    process.stderr.write(`HarnessProof failed at ${stage}: ${message}\n`)
     process.exitCode = 1
   }
 }
