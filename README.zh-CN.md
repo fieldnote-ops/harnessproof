@@ -11,11 +11,11 @@
 
 这里的 `main` 只用于最初的开发者预览；长期工作流应替换为经过审阅的完整 commit SHA。
 
-默认报告路径为 `harnessproof-report.json`。当报告路径本身有效时，失败任务也会写出一份有长度上限的 JSON 失败报告，保留首个失败阶段，同时不需要写权限。v0.1 有意保持窄边界：
+默认报告路径为 `harnessproof-report.json`。当报告路径本身有效时，失败任务还会写出一份有长度上限的 JSON 报告、生成一条防注入的 GitHub 错误 annotation，并把首个失败阶段暴露为 `failure_stage`。这些诊断不需要 PR、Issue 或仓库写权限。v0.1 有意保持窄边界：
 
 - 只支持 Linux/macOS 风格 runner 与 `web` profile；
 - 每个 job 只核一个精确 DSH 版本，`latest` / `next` 应放进 workflow matrix；
-- 不读取 API key、不调用模型或插件远程服务、不自动评论 PR、不生成徽章或 SARIF、不发布；
+- 不读取 API key、不调用模型或插件远程服务、不自动评论 PR、不生成徽章或上传 SARIF、不发布；
 - 只证明安装、配置组合、进程启动和本地 HTTP 健康，不证明插件工具本身正确。
 
 在链接插件之前，HarnessProof 会把插件复制到一次性 consumer；只要声明了依赖，默认就在副本中运行 `npm ci --ignore-scripts`。因此插件必须提交 `package-lock.json`，生成的 `node_modules` 不会污染 checkout，报告会记录 lock 哈希和依赖警告，生命周期脚本不会运行。只有当更早的工作流步骤已经明确准备好一个自包含插件时，才应设置 `prepare_plugin_dependencies: none`。

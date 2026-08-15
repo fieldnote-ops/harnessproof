@@ -6,7 +6,13 @@ import { join } from 'node:path'
 import test from 'node:test'
 import { fileURLToPath } from 'node:url'
 
-import { configLayerPresent, readConfiguration } from '../index.js'
+import {
+  configLayerPresent,
+  escapeWorkflowCommandData,
+  escapeWorkflowCommandProperty,
+  readConfiguration,
+  renderFailureAnnotation,
+} from '../index.js'
 
 function withInputs(values, callback) {
   const prior = { ...process.env }
@@ -106,10 +112,13 @@ test('writes a bounded structured failure report after configuration succeeds', 
   mkdirSync(plugin)
   writeFileSync(join(plugin, 'package.json'), JSON.stringify({ name: 'broken-plugin', version: '0.0.0' }))
   const reportPath = join(workspace, 'reports', 'failure.json')
+  const outputPath = join(workspace, 'github-output.txt')
   const entrypoint = fileURLToPath(new URL('../index.js', import.meta.url))
   const run = spawnSync(process.execPath, [entrypoint], {
     env: {
       ...process.env,
+      GITHUB_ACTIONS: 'true',
+      GITHUB_OUTPUT: outputPath,
       GITHUB_WORKSPACE: workspace,
       INPUT_PLUGIN_PATH: 'broken-plugin',
       INPUT_REPORT_PATH: 'reports/failure.json',
@@ -122,4 +131,25 @@ test('writes a bounded structured failure report after configuration succeeds', 
   assert.equal(report.error.stage, 'package-contract')
   assert.match(report.error.message, /dsh\.bundle\.patch/)
   assert.ok(Buffer.byteLength(report.error.message) <= 4_000)
+  assert.match(readFileSync(outputPath, 'utf8'), /^failure_stage=package-contract$/m)
+  assert.equal(run.stdout.split('\n').filter((line) => line.startsWith('::error ')).length, 1)
+  assert.match(run.stdout, /^::error title=HarnessProof package-contract::/m)
+})
+
+test('renders one injection-safe GitHub error annotation only on Actions', () => {
+  const report = {
+    error: {
+      stage: 'plugin,add:failed\nspoof',
+      message: '%bad\r\n::warning::spoof',
+    },
+  }
+  assert.equal(escapeWorkflowCommandData(report.error.message), '%25bad%0D%0A::warning::spoof')
+  assert.equal(escapeWorkflowCommandProperty(report.error.stage), 'plugin%2Cadd%3Afailed%0Aspoof')
+  assert.equal(renderFailureAnnotation(report, {}), '')
+  const annotation = renderFailureAnnotation(report, { GITHUB_ACTIONS: 'true' })
+  assert.equal(
+    annotation,
+    '::error title=HarnessProof plugin%2Cadd%3Afailed%0Aspoof::%25bad%0D%0A::warning::spoof',
+  )
+  assert.equal(annotation.split('\n').length, 1)
 })

@@ -73,6 +73,26 @@ function appendOutput(name, value) {
   if (destination) appendFileSync(destination, `${name}=${String(value).replaceAll('\n', '%0A')}\n`, 'utf8')
 }
 
+export function escapeWorkflowCommandData(value) {
+  return String(value)
+    .replaceAll('%', '%25')
+    .replaceAll('\r', '%0D')
+    .replaceAll('\n', '%0A')
+}
+
+export function escapeWorkflowCommandProperty(value) {
+  return escapeWorkflowCommandData(value)
+    .replaceAll(':', '%3A')
+    .replaceAll(',', '%2C')
+}
+
+export function renderFailureAnnotation(report, env = process.env) {
+  if (env.GITHUB_ACTIONS !== 'true') return ''
+  const title = escapeWorkflowCommandProperty(`HarnessProof ${report.error.stage}`)
+  const message = escapeWorkflowCommandData(report.error.message)
+  return `::error title=${title}::${message}`
+}
+
 function appendSummary(report) {
   const destination = process.env.GITHUB_STEP_SUMMARY
   if (!destination) return
@@ -338,11 +358,13 @@ async function main() {
     appendOutput('decision', report.decision)
     appendOutput('report_path', relative(config.workspace, config.reportPath))
     appendOutput('dsh_version', report.consumer.dshVersion)
+    appendOutput('failure_stage', '')
     appendSummary(report)
     process.stdout.write(`HarnessProof passed: ${report.plugin.name}@${report.plugin.version} on ${report.consumer.dshVersion}.\n`)
   } catch (error) {
     const message = (error instanceof Error ? error.message : String(error)).slice(-4_000)
     const stage = error instanceof Error && typeof error.harnessproofStage === 'string' ? error.harnessproofStage : 'configuration'
+    appendOutput('failure_stage', stage)
     if (config) {
       const report = {
         schemaVersion: 1,
@@ -357,6 +379,8 @@ async function main() {
       appendOutput('decision', 'fail')
       appendOutput('report_path', report.reportPath)
       appendSummary(report)
+      const annotation = renderFailureAnnotation(report)
+      if (annotation) process.stdout.write(`${annotation}\n`)
     }
     process.stderr.write(`HarnessProof failed at ${stage}: ${message}\n`)
     process.exitCode = 1

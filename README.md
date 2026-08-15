@@ -11,11 +11,11 @@ An independent, evidence-producing GitHub Action for plugins built for DeepSeek 
 
 `main` is shown only for the initial developer preview. For a durable workflow, replace it with a reviewed full commit SHA.
 
-The action emits `harnessproof-report.json` by default. A failed run also writes a bounded JSON failure report when the requested report path is valid, so the first failed stage remains inspectable without granting write permissions. Version 0.1 is deliberately narrow:
+The action emits `harnessproof-report.json` by default. A failed run also writes a bounded JSON failure report, emits one injection-safe GitHub error annotation, and exposes the first stage as `failure_stage` when the requested report path is valid. These diagnostics require no PR, issue, or repository write permission. Version 0.1 is deliberately narrow:
 
 - Linux/macOS-style runners and the `web` profile only;
 - one exact DSH version per job, so `latest`/`next` belong in a workflow matrix;
-- no API keys, model calls, remote plugin calls, PR comments, badges, SARIF, or automatic publishing;
+- no API keys, model calls, remote plugin calls, PR comments, badges, SARIF uploads, or automatic publishing;
 - proves install, configuration composition, process boot, and local HTTP health—not tool correctness.
 
 Before linking the plugin, HarnessProof copies it into the disposable consumer and, by default, runs `npm ci --ignore-scripts` when dependencies are declared. This requires a committed `package-lock.json`, keeps generated `node_modules` out of the checkout, records the lock hash and dependency warnings, and prevents lifecycle scripts from running. Set `prepare_plugin_dependencies: none` only when an earlier workflow step deliberately prepared a self-contained plugin.

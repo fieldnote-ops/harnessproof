@@ -6,13 +6,13 @@
       "target_path": "LICENSE"
     },
     "README.md": {
-      "bytes": 3224,
-      "sha256": "1a1115b942fa679e330245c8783782dedb7a3195698c09728ef9bb9d3680e08a",
+      "bytes": 3320,
+      "sha256": "451f11b5671244025018c55fd5fed6f445e4aeb036e2e6ba5b631ccb6c5bed82",
       "target_path": "README.md"
     },
     "README.zh-CN.md": {
-      "bytes": 2916,
-      "sha256": "6d83f63b5a6364945929ebb555a913637e043578c752d8575543601cdfb79ddb",
+      "bytes": 3020,
+      "sha256": "232471134c18473031295ba20e3016899e4b3595c21d71d12d68cd3a6f10fbdd",
       "target_path": "README.zh-CN.md"
     },
     "SECURITY.md": {
@@ -21,8 +21,8 @@
       "target_path": "SECURITY.md"
     },
     "action.yml": {
-      "bytes": 1458,
-      "sha256": "e9b8555e81ef13071de264116c47a7a6f96320135120d183cf3c89fa1c0b8c99",
+      "bytes": 1543,
+      "sha256": "be60b410dec87a82078e7a73135dd32f05446c7ea19a4d3bd34541c5e7d5cc0b",
       "target_path": "action.yml"
     },
     "github/workflows/self-test.yml": {
@@ -31,18 +31,18 @@
       "target_path": ".github/workflows/self-test.yml"
     },
     "index.js": {
-      "bytes": 17442,
-      "sha256": "45b3539552d283ea64570756dc3d295c1e51cc8f3945e1c892fa533958843692",
+      "bytes": 18274,
+      "sha256": "aca09e2e5546a28617332f535d82698c5db2c8e6a6e2f2e3eb56590993332ec8",
       "target_path": "index.js"
     },
     "package.json": {
       "bytes": 372,
-      "sha256": "55821e9e1feb1cd5e44ac139599895b7828dd8adcdc2d8745569a4f69d0d4f41",
+      "sha256": "c3cfba5a85a8c2b83c94648a62194a81fb90ef08dc0ea6c550fc005083fd8d61",
       "target_path": "package.json"
     },
     "test/config.test.js": {
-      "bytes": 5801,
-      "sha256": "dce7d3eb18b00351b3757580042039e7e150ce1e2a281857f6579103c03c9466",
+      "bytes": 7000,
+      "sha256": "700c08c8bc61b3615e8e819f8ba6812c6f4d85074cf9436b567c3af40b57cb26",
       "target_path": "test/config.test.js"
     },
     "test/fixture-plugin/cordis.patch.yml": {
@@ -69,5 +69,5 @@
   "product": "HarnessProof",
   "public_identity": "FIELD NOTE",
   "schema_version": 1,
-  "version": "0.1.5"
+  "version": "0.1.6"
 }

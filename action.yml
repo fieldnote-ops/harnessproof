@@ -37,6 +37,8 @@ outputs:
     description: Path to the generated JSON report.
   dsh_version:
     description: DSH version reported by the isolated consumer.
+  failure_stage:
+    description: First failed HarnessProof stage; empty on success.
 runs:
   using: node24
   main: index.js
