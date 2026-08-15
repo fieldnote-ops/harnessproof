@@ -1,15 +1,29 @@
 # HarnessProof
 
+[![Self-test](https://github.com/fieldnote-ops/harnessproof/actions/workflows/self-test.yml/badge.svg?branch=main)](https://github.com/fieldnote-ops/harnessproof/actions/workflows/self-test.yml)
+
 这是一个面向 DeepSeek Harness 插件的独立兼容性 GitHub Action：在临时 profile 中通过官方 `dsh plugin` 命令安装插件，确认 bundle 已进入组合配置，随后在回环地址启动 Web profile，并要求首页返回 HTTP 200。
 
+## 运行时证据，不是静态打分
+
+| 阶段 | 必须获得的证据 |
+| --- | --- |
+| Consumer | 创建隔离的临时 consumer，并安装一个精确 DSH 版本。 |
+| 插件安装 | 复制插件、在禁用生命周期脚本时准备锁定依赖，再调用官方 `dsh plugin` 命令。 |
+| 配置组合 | 要求组合 profile 中存在插件的精确 bundle 层与 package name。 |
+| 启动 | 在回环地址启动 Web profile，并在超时前要求 HTTP 200。 |
+| 报告 | 写出有界 JSON，记录消费版本、lock 哈希、耗时、检查和首个失败阶段。 |
+| 权限 | 只需仓库内容读取权限；不读取模型凭据、不评论 PR、不上传 SARIF，也不写仓库状态。 |
+| 上限 | 绿色结果不证明插件工具正确、模型调用、第三方服务行为、采用或 Marketplace 接受。 |
+
 ```yaml
-- uses: fieldnote-ops/harnessproof@main
+- uses: fieldnote-ops/harnessproof@2b7a246ab595313366cd9806380c3ff0fd6264c9
   with:
     plugin_path: .
     dsh_version: 0.1.0-rc.6
 ```
 
-这里的 `main` 只用于最初的开发者预览；长期工作流应替换为经过审阅的完整 commit SHA。
+上述完整 commit 是上一份已公开验证的 Action 版本。可以查看 `main` 的持续开发，但长期工作流应固定到经过审阅的完整 commit SHA。
 
 默认报告路径为 `harnessproof-report.json`。当报告路径本身有效时，失败任务还会写出一份有长度上限的 JSON 报告、生成一条防注入的 GitHub 错误 annotation，并把首个失败阶段暴露为 `failure_stage`。这些诊断不需要 PR、Issue 或仓库写权限。v0.1 有意保持窄边界：
 

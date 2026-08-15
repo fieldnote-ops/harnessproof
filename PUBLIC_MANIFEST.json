@@ -6,13 +6,13 @@
       "target_path": "LICENSE"
     },
     "README.md": {
-      "bytes": 3320,
-      "sha256": "451f11b5671244025018c55fd5fed6f445e4aeb036e2e6ba5b631ccb6c5bed82",
+      "bytes": 4552,
+      "sha256": "b2ec7448bcd181b3495cd5a85855efdc29ef6617f31922ea6b840fd3dc0983e5",
       "target_path": "README.md"
     },
     "README.zh-CN.md": {
-      "bytes": 3020,
-      "sha256": "232471134c18473031295ba20e3016899e4b3595c21d71d12d68cd3a6f10fbdd",
+      "bytes": 4146,
+      "sha256": "47587f4455bc8604fd3db03d3ce9357d84ba5084be04370a1d97169de589a81b",
       "target_path": "README.zh-CN.md"
     },
     "SECURITY.md": {
@@ -37,7 +37,7 @@
     },
     "package.json": {
       "bytes": 372,
-      "sha256": "c3cfba5a85a8c2b83c94648a62194a81fb90ef08dc0ea6c550fc005083fd8d61",
+      "sha256": "ebe5c9d1f53e34dfe723074835757ec01a6c44e08461870d519e3bf301a7226f",
       "target_path": "package.json"
     },
     "test/config.test.js": {
@@ -69,5 +69,5 @@
   "product": "HarnessProof",
   "public_identity": "FIELD NOTE",
   "schema_version": 1,
-  "version": "0.1.6"
+  "version": "0.1.7"
 }
